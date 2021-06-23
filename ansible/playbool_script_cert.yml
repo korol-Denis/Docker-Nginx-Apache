@@ -1,0 +1,13 @@
+---
+- name: Run script installing sert
+  hosts: all
+  become: yes
+
+  tasks:
+  - name: Changing perm of "/home/ubuntu/nginx_ansible/init-letsencrypt.sh", adding "+x"
+    file: dest=/home/ubuntu/nginx_ansible/init-letsencrypt.sh mode=a+x
+
+  - name: Running scrtipt sert
+    shell:
+     chdir: /home/ubuntu/nginx_ansible/
+     cmd: ./init-letsencrypt.sh

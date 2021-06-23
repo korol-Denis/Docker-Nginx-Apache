@@ -1,0 +1,54 @@
+---
+- name: Install docker with Nginx and Apache
+  hosts: all
+  become: yes
+
+  vars:
+    source_dir: "/home/ubuntu/nginx_ansible"
+    destin_dir: "/home/{{ ansible_user }}/"
+  
+  tasks:
+  - name: Copy Files
+    copy: 
+      src: {{ source_dir }} 
+      dest: {{ destin_dir }}
+  
+  - name: Install aptitude using apt
+    apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+  - name: Install required system packages
+    apt: name={{ item }} state=latest update_cache=yes
+    loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+
+  - name: Add Docker GPG apt Key
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Add Docker Repository
+    apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu bionic stable
+      state: present
+
+  - name: Update apt and install docker-ce
+    apt: update_cache=yes name=docker-ce state=latest
+
+  - name: Install Docker Module for Python
+    pip:
+      name: docker
+
+  - name: Install Docker-compose
+    pip:
+      name: docker-compose
+
+  - name: Build image shutler:apache
+    shell: "docker build {{ destin_dir }}/nginx_ansible/Apache/ --tag shutler:apache"
+
+  - name: Build image shutler:best-site
+    shell: "docker build {{ destin_dir }}/nginx_ansible/best-site/ --tag shutler:best-site"
+
+  - name: Build image shutler:best-site2
+    shell: "docker build {{ destin_dir }}/nginx_ansible/best-site2/ --tag shutler:best-site2"
+
+  - name: Start docker-compose.yml
+    shell: "docker-compose -f {{ destin_dir }}/nginx_ansible/docker-compose.yml up -d"
